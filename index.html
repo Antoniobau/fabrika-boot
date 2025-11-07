@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Boot Universitario</title>
+</head>
+<body>
+<h1>Boot Universitario</h1>
+<textarea id="chat" rows="10" cols="50" readonly></textarea><br>
+<input id="inputText" type="text" placeholder="Escribe o habla...">
+<button onclick="sendMessage()">Enviar</button>
+<button onclick="startVoice()">Hablar</button>
+
+<script>
+const chatBox = document.getElementById('chat');
+const inputText = document.getElementById('inputText');
+
+async function sendMessage() {
+  const input = inputText.value;
+  if(!input) return;
+  chatBox.value += 'Usuario: ' + input + '\n';
+  inputText.value = '';
+
+  const res = await fetch('/api/ai.js', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input })
+  });
+  const data = await res.json();
+  chatBox.value += 'Boot: ' + data.response + '\n';
+
+  const utter = new SpeechSynthesisUtterance(data.response);
+  speechSynthesis.speak(utter);
+}
+
+function startVoice() {
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = 'es-ES';
+  recognition.start();
+
+  recognition.onresult = function(event) {
+    inputText.value = event.results[0][0].transcript;
+    sendMessage();
+  };
+}
+</script>
+</body>
+</html>
